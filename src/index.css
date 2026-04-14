@@ -229,6 +229,12 @@ input, select {
   to   { transform: rotate(360deg); }
 }
 
+/* Disc spin — transform-origin is 0px 0px (local origin = disc center via SVG translate) */
+.disc-spin {
+  animation: spin 3s linear infinite;
+  transform-origin: 0px 0px;
+}
+
 /* ─────────────────────────────────────────────────────────────
    NOW PLAYING INFO
    ───────────────────────────────────────────────────────────── */

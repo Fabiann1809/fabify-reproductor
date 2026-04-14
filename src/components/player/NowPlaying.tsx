@@ -7,21 +7,35 @@ function colorFromString(str: string): string {
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const h = Math.abs(hash) % 360;
-  return `hsl(${h}, 45%, 35%)`;
+  return `hsl(${Math.abs(hash) % 360}, 45%, 35%)`;
 }
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 // ─────────────────────────────────────────────────────────────
-// Unified turntable SVG — disc + tonearm in one coordinate space
-// viewBox: 0 0 300 260
-//   Disc  center : (130, 130) radius 118
-//   Arm   pivot  : (255, 12)
-//   Arm   length : 150px (SVG units)
-//   Playing      : rotate(-12deg)  → tip ≈ (223, 159) — outer disc edge
-//   Lifted       : rotate(+22deg)  → tip goes right, off the disc
+// Geometry (all values in SVG user units, viewBox 0 0 300 260)
+//
+//  Disc  center : (130, 130)   radius 118
+//  Arm   pivot  : (255, 12)    in outer SVG space
+//
+//  Arm is drawn in LOCAL coords (pivot = local 0,0):
+//    arm tip  local : (-8, 140)
+//
+//  CSS rotate(θ) formula (positive θ = clockwise in screen):
+//    x' = x·cos(θ) − y·sin(θ)
+//    y' = x·sin(θ) + y·cos(θ)
+//
+//  Playing θ = +12° (CW):
+//    tip in outer SVG ≈ (218, 147)  → ~90 px from disc center  ✓ on disc
+//
+//  Lifted  θ = −22° (CCW):
+//    tip in outer SVG ≈ (300, 145)  → far right, off disc       ✓ lifted
 // ─────────────────────────────────────────────────────────────
+
+const PIVOT_X = 255;
+const PIVOT_Y = 12;
+const PLAYING_ANGLE =  12;   // CW  → tip goes LEFT, onto disc
+const LIFTED_ANGLE  = -22;   // CCW → tip goes RIGHT, off disc
 
 interface TurntableProps {
   artworkUrl: string;
@@ -30,22 +44,11 @@ interface TurntableProps {
   lifted: boolean;
 }
 
-const PIVOT_X = 255;
-const PIVOT_Y = 12;
-const ARM_LENGTH = 150;
-const PLAYING_ANGLE = -12;
-const LIFTED_ANGLE = 22;
-
 function Turntable({ artworkUrl, artist, spinning, lifted }: TurntableProps) {
   const grooves = Array.from({ length: 14 }, (_, i) => 115 - i * 6);
   const initials = artist.slice(0, 2).toUpperCase();
   const bgColor = colorFromString(artist);
   const armAngle = lifted ? LIFTED_ANGLE : PLAYING_ANGLE;
-
-  // Compute stylus tip position for accuracy (not used in render, just FYI)
-  const _tipX = PIVOT_X + ARM_LENGTH * Math.sin((armAngle * Math.PI) / 180);
-  const _tipY = PIVOT_Y + ARM_LENGTH * Math.cos((armAngle * Math.PI) / 180);
-  void _tipX; void _tipY;
 
   return (
     <svg
@@ -55,140 +58,139 @@ function Turntable({ artworkUrl, artist, spinning, lifted }: TurntableProps) {
       aria-hidden="true"
     >
       <defs>
+        {/* Clip path in outer SVG coords — disc image area */}
         <clipPath id="artwork-clip">
           <circle cx="130" cy="130" r="48" />
         </clipPath>
-        <radialGradient id="disc-sheen" cx="40%" cy="40%" r="60%">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.04)" />
+        <radialGradient id="disc-sheen" cx="38%" cy="38%" r="62%">
+          <stop offset="0%"   stopColor="rgba(255,255,255,0.05)" />
           <stop offset="100%" stopColor="rgba(0,0,0,0)" />
         </radialGradient>
       </defs>
 
-      {/* ── Disc group — spins independently ── */}
-      {/* We wrap disc content inside a <g> translated to the disc center.
-          CSS animation spin rotates around transform-origin 130px 130px set on this element. */}
-      <g
-        style={{
-          transformOrigin: '130px 130px',
-          animation: spinning ? 'spin 3s linear infinite' : 'none',
-        }}
-      >
-        {/* Outer vinyl */}
-        <circle cx="130" cy="130" r="118" fill="#0d0d0d" stroke="#222" strokeWidth="1" />
+      {/* ── DISC
+            Outer <g> uses SVG translate attribute to move to disc center.
+            Inner <g> carries the CSS spin animation; its local (0,0) is the
+            disc center, so transform-origin: 0px 0px is the exact center.  ── */}
+      <g transform="translate(130, 130)">
+        <g
+          className={spinning ? 'disc-spin' : ''}
+          style={{ transformOrigin: '0px 0px' }}
+        >
+          {/* Vinyl body */}
+          <circle cx="0" cy="0" r="118" fill="#0d0d0d" stroke="#1e1e1e" strokeWidth="1" />
 
-        {/* Concentric grooves */}
-        {grooves.map((r, i) => (
-          <circle key={i} cx="130" cy="130" r={r} fill="none" stroke="#1c1c1c" strokeWidth="1.1" />
-        ))}
+          {/* Concentric grooves */}
+          {grooves.map((r, i) => (
+            <circle key={i} cx="0" cy="0" r={r} fill="none" stroke="#1c1c1c" strokeWidth="1.1" />
+          ))}
 
-        {/* Label area */}
-        <circle cx="130" cy="130" r="52" fill="#111" />
+          {/* Label ring */}
+          <circle cx="0" cy="0" r="52" fill="#111" />
 
-        {/* Artwork or initials */}
-        {artworkUrl ? (
-          <image
-            href={artworkUrl}
-            x="82"
-            y="82"
-            width="96"
-            height="96"
-            clipPath="url(#artwork-clip)"
-            preserveAspectRatio="xMidYMid slice"
-          />
-        ) : (
-          <>
-            <circle cx="130" cy="130" r="48" fill={bgColor} />
-            <text
-              x="130"
-              y="137"
-              textAnchor="middle"
-              fill="#fff"
-              fontSize="20"
-              fontWeight="700"
-              fontFamily="system-ui, sans-serif"
-            >
-              {initials}
-            </text>
-          </>
-        )}
+          {/* Artwork — the clip path is in outer SVG coords,
+              but the image is also referenced there via href + x/y */}
+          {artworkUrl ? (
+            <image
+              href={artworkUrl}
+              x="-48"
+              y="-48"
+              width="96"
+              height="96"
+              clipPath="url(#artwork-clip)"
+              preserveAspectRatio="xMidYMid slice"
+            />
+          ) : (
+            <>
+              <circle cx="0" cy="0" r="48" fill={bgColor} />
+              <text
+                x="0" y="7"
+                textAnchor="middle"
+                fill="#fff"
+                fontSize="20"
+                fontWeight="700"
+                fontFamily="system-ui, sans-serif"
+              >
+                {initials}
+              </text>
+            </>
+          )}
 
-        {/* Center hole */}
-        <circle cx="130" cy="130" r="5" fill="#060606" />
+          {/* Center spindle hole */}
+          <circle cx="0" cy="0" r="5" fill="#060606" />
 
-        {/* Sheen */}
-        <circle cx="130" cy="130" r="118" fill="url(#disc-sheen)" />
-        <circle cx="130" cy="130" r="118" fill="none" stroke="rgba(201,169,110,0.06)" strokeWidth="2" />
+          {/* Sheen overlay */}
+          <circle cx="0" cy="0" r="118" fill="url(#disc-sheen)" />
+          <circle cx="0" cy="0" r="118" fill="none" stroke="rgba(201,169,110,0.07)" strokeWidth="2" />
+        </g>
       </g>
 
-      {/* ── Tonearm — rotates around PIVOT_X, PIVOT_Y ── */}
-      <g
-        style={{
-          transformOrigin: `${PIVOT_X}px ${PIVOT_Y}px`,
-          transform: `rotate(${armAngle}deg)`,
-          transition: lifted
-            ? 'transform 0.65s ease-in'
-            : 'transform 1s ease-out',
-        }}
-      >
-        {/* Base platform */}
-        <circle cx={PIVOT_X} cy={PIVOT_Y} r="11" fill="#2a2a2a" stroke="#444" strokeWidth="1" />
-        <circle cx={PIVOT_X} cy={PIVOT_Y} r="7" fill="#C9A96E" />
-        <circle cx={PIVOT_X} cy={PIVOT_Y} r="3" fill="#1a1a1a" />
+      {/* ── TONEARM
+            Strategy: SVG `transform="translate(PIVOT_X, PIVOT_Y)"` positions
+            the outer group so that local (0,0) = the pivot point in outer SVG.
+            The inner group carries CSS rotate(θ) with transform-origin: 0px 0px,
+            which now correctly rotates around the pivot.                        ── */}
+      <g transform={`translate(${PIVOT_X}, ${PIVOT_Y})`}>
+        <g
+          style={{
+            transformOrigin: '0px 0px',
+            transform: `rotate(${armAngle}deg)`,
+            transition: lifted
+              ? 'transform 0.65s ease-in'
+              : 'transform 1s ease-out',
+          }}
+        >
+          {/* Pivot base plate */}
+          <circle cx="0" cy="0" r="13" fill="#1e1e1e" stroke="#3a3a3a" strokeWidth="1" />
+          <circle cx="0" cy="0" r="9"  fill="#C9A96E" />
+          <circle cx="0" cy="0" r="4"  fill="#111" />
 
-        {/* Arm tube — from pivot down */}
-        <line
-          x1={PIVOT_X}
-          y1={PIVOT_Y + 4}
-          x2={PIVOT_X - 8}
-          y2={PIVOT_Y + ARM_LENGTH - 14}
-          stroke="#C9A96E"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        {/* Arm highlight */}
-        <line
-          x1={PIVOT_X}
-          y1={PIVOT_Y + 4}
-          x2={PIVOT_X - 8}
-          y2={PIVOT_Y + ARM_LENGTH - 14}
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
+          {/* Arm tube — from pivot downward, slightly left */}
+          <line
+            x1="0"  y1="6"
+            x2="-8" y2="134"
+            stroke="#C9A96E"
+            strokeWidth="5"
+            strokeLinecap="round"
+          />
+          {/* Highlight stripe on arm */}
+          <line
+            x1="0"  y1="6"
+            x2="-8" y2="134"
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
 
-        {/* Headshell */}
-        <rect
-          x={PIVOT_X - 18}
-          y={PIVOT_Y + ARM_LENGTH - 18}
-          width="22"
-          height="10"
-          rx="3"
-          fill="#b89050"
-          stroke="#8a6e3e"
-          strokeWidth="0.5"
-        />
+          {/* Headshell body */}
+          <rect
+            x="-20" y="126"
+            width="24" height="12"
+            rx="3"
+            fill="#b89050"
+            stroke="#8a6e3e"
+            strokeWidth="0.8"
+          />
 
-        {/* Cartridge */}
-        <rect
-          x={PIVOT_X - 14}
-          y={PIVOT_Y + ARM_LENGTH - 10}
-          width="12"
-          height="6"
-          rx="1"
-          fill="#888"
-        />
+          {/* Cartridge */}
+          <rect
+            x="-16" y="136"
+            width="14" height="7"
+            rx="1.5"
+            fill="#777"
+          />
 
-        {/* Stylus cantilever */}
-        <line
-          x1={PIVOT_X - 8}
-          y1={PIVOT_Y + ARM_LENGTH - 5}
-          x2={PIVOT_X - 8}
-          y2={PIVOT_Y + ARM_LENGTH + 6}
-          stroke="#aaa"
-          strokeWidth="1.5"
-        />
-        {/* Stylus diamond */}
-        <circle cx={PIVOT_X - 8} cy={PIVOT_Y + ARM_LENGTH + 7} r="2.5" fill="#ddd" />
+          {/* Cantilever */}
+          <line
+            x1="-9" y1="143"
+            x2="-9" y2="152"
+            stroke="#bbb"
+            strokeWidth="1.5"
+          />
+
+          {/* Stylus diamond */}
+          <circle cx="-9" cy="153" r="2.8" fill="#ddd" />
+        </g>
       </g>
     </svg>
   );
@@ -225,11 +227,11 @@ export function NowPlaying() {
     setState((s) => ({ ...s, opacity: 0 }));
     await wait(300);
 
-    // 3. Swap song data + fade in
+    // 3. Swap song + fade in
     setState((s) => ({ ...s, displaySong: newSong, opacity: 1 }));
     await wait(80);
 
-    // 4. Lower arm
+    // 4. Lower arm onto disc
     setState((s) => ({ ...s, lifted: false }));
 
     animating.current = false;
