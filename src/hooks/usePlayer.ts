@@ -17,6 +17,7 @@ export function usePlayer() {
   const [volume, setVolume] = useState(0.8);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('none');
   const [isShuffle, setIsShuffle] = useState(false);
+  const [historyItems, setHistoryItems] = useState<Song[]>([]);
 
   const onShufflePlaylist = useRef<(() => void) | null>(null);
 
@@ -46,10 +47,23 @@ export function usePlayer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const pushToHistory = useCallback((song: Song) => {
+    history.current.push(song);
+    setHistoryItems((prev) => [...prev, song]);
+  }, []);
+
+  const popFromHistory = useCallback((): Song | undefined => {
+    const song = history.current.pop();
+    if (song !== undefined) {
+      setHistoryItems((prev) => prev.slice(0, -1));
+    }
+    return song;
+  }, []);
+
   const playSong = useCallback((node: DLLNode<Song>) => {
     const audio = audioRef.current;
     if (currentNode.current && currentNode.current.value.id !== node.value.id) {
-      history.current.push(currentNode.current.value);
+      pushToHistory(currentNode.current.value);
     }
     currentNode.current = node;
     audio.src = node.value.previewUrl;
@@ -58,13 +72,13 @@ export function usePlayer() {
     setNowPlaying(node.value);
     setCurrentTime(0);
     setDuration(0);
-  }, []);
+  }, [pushToHistory]);
 
   const next = useCallback(() => {
     const node = currentNode.current;
     if (!node) return;
     if (currentNode.current) {
-      history.current.push(currentNode.current.value);
+      pushToHistory(currentNode.current.value);
     }
     const nextNode = node.next;
     if (nextNode) {
@@ -80,7 +94,7 @@ export function usePlayer() {
       audioRef.current.pause();
       setIsPlaying(false);
     }
-  }, []);
+  }, [pushToHistory]);
 
   const prev = useCallback(() => {
     const audio = audioRef.current;
@@ -88,21 +102,18 @@ export function usePlayer() {
       audio.currentTime = 0;
       return;
     }
-    const previous = history.current.pop();
+    const previous = popFromHistory();
     if (!previous) {
       audio.currentTime = 0;
       return;
     }
     const dll = currentNode.current;
     if (!dll) return;
-    // Find the node in the dll by id
     let cursor: DLLNode<Song> | null = currentNode.current;
-    // walk backward first
     while (cursor && cursor.value.id !== previous.id) {
       cursor = cursor.prev;
     }
     if (!cursor) {
-      // walk forward
       cursor = currentNode.current;
       while (cursor && cursor.value.id !== previous.id) {
         cursor = cursor.next;
@@ -119,7 +130,7 @@ export function usePlayer() {
     } else {
       audio.currentTime = 0;
     }
-  }, []);
+  }, [popFromHistory]);
 
   const handleSongEnded = useCallback(() => {
     const node = currentNode.current;
@@ -136,7 +147,7 @@ export function usePlayer() {
     if (currentRepeat === 'all') {
       const nextNode = node.next ?? (node as DLLNode<Song> & { _head?: DLLNode<Song> })._head;
       if (node.next) {
-        history.current.push(node.value);
+        pushToHistory(node.value);
         currentNode.current = node.next;
         const audio = audioRef.current;
         audio.src = node.next.value.previewUrl;
@@ -146,7 +157,6 @@ export function usePlayer() {
         setCurrentTime(0);
         setDuration(0);
       } else {
-        // wrap to head — handled via ref callback
         onShufflePlaylist.current?.();
       }
       void nextNode;
@@ -155,7 +165,7 @@ export function usePlayer() {
 
     // none
     if (node.next) {
-      history.current.push(node.value);
+      pushToHistory(node.value);
       currentNode.current = node.next;
       const audio = audioRef.current;
       audio.src = node.next.value.previewUrl;
@@ -168,7 +178,7 @@ export function usePlayer() {
       setIsPlaying(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repeatMode]);
+  }, [repeatMode, pushToHistory]);
 
   // Re-attach ended listener when repeatMode changes
   useEffect(() => {
@@ -225,6 +235,7 @@ export function usePlayer() {
     volume,
     repeatMode,
     isShuffle,
+    historyItems,
     playSong,
     next,
     prev,

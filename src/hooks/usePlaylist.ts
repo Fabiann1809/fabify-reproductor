@@ -42,6 +42,11 @@ export function usePlaylist() {
     syncArray();
   }, [syncArray]);
 
+  const reversePlaylist = useCallback(() => {
+    dll.current.reverse();
+    syncArray();
+  }, [syncArray]);
+
   const clearPlaylist = useCallback(() => {
     for (const song of dll.current.toArray()) {
       if (song.source === 'local') revokeObjectURL(song.id);
@@ -65,6 +70,7 @@ export function usePlaylist() {
     playNext,
     removeSong,
     shufflePlaylist,
+    reversePlaylist,
     clearPlaylist,
     updateSongDuration,
   };

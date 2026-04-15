@@ -9,10 +9,11 @@ interface SongCardProps {
   song: Song;
   node?: DLLNode<Song>;
   showRemove?: boolean;
+  showQueueActions?: boolean; // shows "Sig." / "Final" buttons instead of context menu
   isActive?: boolean;
 }
 
-export function SongCard({ song, node, showRemove = false, isActive = false }: SongCardProps) {
+export function SongCard({ song, node, showRemove = false, showQueueActions = false, isActive = false }: SongCardProps) {
   const { playSong, playNext, addToQueue, removeSong, currentNode, dll } = usePlayerContext();
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -28,11 +29,13 @@ export function SongCard({ song, node, showRemove = false, isActive = false }: S
     playSong(n);
   };
 
-  const handlePlayNext = () => {
+  const handlePlayNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
     playNext(song, currentNode.current);
   };
 
-  const handleAddToQueue = () => {
+  const handleAddToQueue = (e: React.MouseEvent) => {
+    e.stopPropagation();
     addToQueue(song);
   };
 
@@ -51,7 +54,7 @@ export function SongCard({ song, node, showRemove = false, isActive = false }: S
     <>
       <div
         className={`song-card ${isActive ? 'song-card--active' : ''}`}
-        onContextMenu={handleContextMenu}
+        onContextMenu={!showQueueActions ? handleContextMenu : undefined}
         onClick={handlePlayNow}
       >
         {song.artworkUrl ? (
@@ -69,25 +72,40 @@ export function SongCard({ song, node, showRemove = false, isActive = false }: S
 
         <span className="song-card__duration">{formatDuration(song.durationMs)}</span>
 
-        <div className="song-card__actions">
-          <button className="icon-btn" onClick={handleMenuButton} title="Opciones">
-            ⋮
-          </button>
-          {showRemove && node && (
-            <button className="icon-btn icon-btn--danger" onClick={(e) => { e.stopPropagation(); removeSong(node); }} title="Eliminar">
-              ✕
+        {showQueueActions ? (
+          <div className="song-queue-actions">
+            <button className="queue-action-btn" onClick={handlePlayNext} title="Reproducir a continuación">
+              Sig.
             </button>
-          )}
-        </div>
+            <button className="queue-action-btn" onClick={handleAddToQueue} title="Agregar al final">
+              Final
+            </button>
+          </div>
+        ) : (
+          <div className="song-card__actions">
+            <button className="icon-btn" onClick={handleMenuButton} title="Opciones">
+              ⋮
+            </button>
+            {showRemove && node && (
+              <button
+                className="icon-btn icon-btn--danger"
+                onClick={(e) => { e.stopPropagation(); removeSong(node); }}
+                title="Eliminar"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {menuPos && (
+      {menuPos && !showQueueActions && (
         <ContextMenu
           x={menuPos.x}
           y={menuPos.y}
           onPlayNow={handlePlayNow}
-          onPlayNext={handlePlayNext}
-          onAddToQueue={handleAddToQueue}
+          onPlayNext={() => playNext(song, currentNode.current)}
+          onAddToQueue={() => addToQueue(song)}
           onClose={() => setMenuPos(null)}
         />
       )}

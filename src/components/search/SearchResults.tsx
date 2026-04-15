@@ -1,13 +1,18 @@
 import { usePlayerContext } from '../../context/PlayerContext';
 import { SongCard } from '../song/SongCard';
 
-export function SearchResults() {
+interface SearchResultsProps {
+  showQueueActions?: boolean;
+}
+
+export function SearchResults({ showQueueActions = false }: SearchResultsProps) {
   const { results, isLoading, searchError, query } = usePlayerContext();
 
   if (!query.trim()) {
     return (
       <div className="empty-state">
         <p>Busca tus canciones favoritas</p>
+        <small>Escribe el nombre de un artista o canción</small>
       </div>
     );
   }
@@ -40,7 +45,7 @@ export function SearchResults() {
   return (
     <div className="song-list">
       {results.map((song) => (
-        <SongCard key={song.id} song={song} />
+        <SongCard key={song.id} song={song} showQueueActions={showQueueActions} />
       ))}
     </div>
   );

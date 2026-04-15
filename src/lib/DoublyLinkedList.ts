@@ -115,6 +115,17 @@ export class DoublyLinkedList<T> {
     }
   }
 
+  reverse(): void {
+    const arr = this.toArray();
+    arr.reverse();
+    this.head = null;
+    this.tail = null;
+    this._size = 0;
+    for (const item of arr) {
+      this.append(item);
+    }
+  }
+
   clear(): void {
     this.head = null;
     this.tail = null;

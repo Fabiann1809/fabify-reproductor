@@ -2,7 +2,11 @@ import { useRef, useState } from 'react';
 import { usePlayerContext } from '../../context/PlayerContext';
 import { importLocalFiles, getAudioDuration } from '../../services/LocalFileService';
 
-export function LocalFileImport() {
+interface LocalFileImportProps {
+  compact?: boolean; // renders as a sidebar button instead of drag-drop area
+}
+
+export function LocalFileImport({ compact = false }: LocalFileImportProps) {
   const { addToQueue, updateSongDuration } = usePlayerContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -32,6 +36,29 @@ export function LocalFileImport() {
       processFiles(e.dataTransfer.files);
     }
   };
+
+  if (compact) {
+    return (
+      <button
+        className="sidebar__upload-btn"
+        onClick={() => fileInputRef.current?.click()}
+        title="Importar archivos de audio"
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/*"
+          multiple
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+          <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+        </svg>
+        Subir archivo local
+      </button>
+    );
+  }
 
   return (
     <div

@@ -2,11 +2,9 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { usePlayer } from '../hooks/usePlayer';
 import { usePlaylist } from '../hooks/usePlaylist';
 import { useSearch } from '../hooks/useSearch';
-import { useTheme } from '../hooks/useTheme';
 import type { Song } from '../types/song';
 import type { DLLNode } from '../lib/DoublyLinkedList';
 import type { RepeatMode } from '../hooks/usePlayer';
-import type { Theme } from '../hooks/useTheme';
 
 interface PlayerContextValue {
   // Player state
@@ -17,6 +15,7 @@ interface PlayerContextValue {
   volume: number;
   repeatMode: RepeatMode;
   isShuffle: boolean;
+  historyItems: Song[];
   currentNode: React.MutableRefObject<DLLNode<Song> | null>;
   // Player actions
   playSong: (node: DLLNode<Song>) => void;
@@ -35,6 +34,7 @@ interface PlayerContextValue {
   playNext: (song: Song, currentNode: DLLNode<Song> | null) => DLLNode<Song>;
   removeSong: (node: DLLNode<Song>) => void;
   shufflePlaylist: () => void;
+  reversePlaylist: () => void;
   clearPlaylist: () => void;
   updateSongDuration: (songId: string, durationMs: number) => void;
   dll: React.MutableRefObject<import('../lib/DoublyLinkedList').DoublyLinkedList<Song>>;
@@ -44,60 +44,53 @@ interface PlayerContextValue {
   results: Song[];
   isLoading: boolean;
   searchError: string | null;
-  // Theme
-  theme: Theme;
-  toggleTheme: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const player = usePlayer();
+  const player   = usePlayer();
   const playlist = usePlaylist();
-  const search = useSearch();
-  const themeHook = useTheme();
+  const search   = useSearch();
 
-  // Wire shuffle toggle: also shuffle the playlist
   const handleToggleShuffle = () => {
     player.toggleShuffle();
-    if (!player.isShuffle) {
-      playlist.shufflePlaylist();
-    }
+    if (!player.isShuffle) playlist.shufflePlaylist();
   };
 
   const value: PlayerContextValue = {
-    nowPlaying: player.nowPlaying,
-    isPlaying: player.isPlaying,
-    currentTime: player.currentTime,
-    duration: player.duration,
-    volume: player.volume,
-    repeatMode: player.repeatMode,
-    isShuffle: player.isShuffle,
-    currentNode: player.currentNode,
-    playSong: player.playSong,
-    next: player.next,
-    prev: player.prev,
-    togglePlay: player.togglePlay,
-    seek: player.seek,
-    seekTo: player.seekTo,
-    setVolumeLevel: player.setVolumeLevel,
-    cycleRepeatMode: player.cycleRepeatMode,
-    toggleShuffle: handleToggleShuffle,
-    songs: playlist.songs,
-    addToQueue: playlist.addToQueue,
-    playNext: playlist.playNext,
-    removeSong: playlist.removeSong,
-    shufflePlaylist: playlist.shufflePlaylist,
-    clearPlaylist: playlist.clearPlaylist,
-    updateSongDuration: playlist.updateSongDuration,
-    dll: playlist.dll,
-    query: search.query,
-    setQuery: search.setQuery,
-    results: search.results,
-    isLoading: search.isLoading,
-    searchError: search.error,
-    theme: themeHook.theme,
-    toggleTheme: themeHook.toggleTheme,
+    nowPlaying:          player.nowPlaying,
+    isPlaying:           player.isPlaying,
+    currentTime:         player.currentTime,
+    duration:            player.duration,
+    volume:              player.volume,
+    repeatMode:          player.repeatMode,
+    isShuffle:           player.isShuffle,
+    historyItems:        player.historyItems,
+    currentNode:         player.currentNode,
+    playSong:            player.playSong,
+    next:                player.next,
+    prev:                player.prev,
+    togglePlay:          player.togglePlay,
+    seek:                player.seek,
+    seekTo:              player.seekTo,
+    setVolumeLevel:      player.setVolumeLevel,
+    cycleRepeatMode:     player.cycleRepeatMode,
+    toggleShuffle:       handleToggleShuffle,
+    songs:               playlist.songs,
+    addToQueue:          playlist.addToQueue,
+    playNext:            playlist.playNext,
+    removeSong:          playlist.removeSong,
+    shufflePlaylist:     playlist.shufflePlaylist,
+    reversePlaylist:     playlist.reversePlaylist,
+    clearPlaylist:       playlist.clearPlaylist,
+    updateSongDuration:  playlist.updateSongDuration,
+    dll:                 playlist.dll,
+    query:               search.query,
+    setQuery:            search.setQuery,
+    results:             search.results,
+    isLoading:           search.isLoading,
+    searchError:         search.error,
   };
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
