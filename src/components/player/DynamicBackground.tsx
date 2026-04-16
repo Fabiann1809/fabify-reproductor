@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePlayerContext } from '../../context/PlayerContext';
 
-/** Mismo algoritmo que NowPlaying para mantener coherencia de color */
+/** Same algorithm as NowPlaying to keep color coherence. */
 function colorFromString(str: string): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -20,7 +20,7 @@ const EMPTY: Layer = { artworkUrl: '', fallbackColor: '#111' };
 export function DynamicBackground() {
   const { nowPlaying } = usePlayerContext();
 
-  // Dos capas que se alternan para lograr el crossfade sin parpadeo
+  // Two alternating layers for flicker-free crossfade.
   const [layers, setLayers] = useState<[Layer, Layer]>([EMPTY, EMPTY]);
   const [active, setActive] = useState<0 | 1>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -35,14 +35,14 @@ export function DynamicBackground() {
 
     const nextIdx = active === 0 ? 1 : 0;
 
-    // 1. Escribir el nuevo contenido en la capa INACTIVA (invisible)
+    // 1. Write new content into the INACTIVE layer (invisible).
     setLayers((prev) => {
       const updated: [Layer, Layer] = [prev[0], prev[1]];
       updated[nextIdx] = next;
       return updated;
     });
 
-    // 2. Después de que React la pinte, hacerla visible con fade
+    // 2. After React paints it, make it visible with fade.
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setActive(nextIdx as 0 | 1);
@@ -78,7 +78,7 @@ export function DynamicBackground() {
         </div>
       ))}
 
-      {/* Viñeta radial: difumina los bordes y protege la legibilidad */}
+      {/* Radial vignette: softens edges and improves readability */}
       <div className="dyn-bg__vignette" />
     </div>
   );

@@ -1,14 +1,14 @@
 import { useRef, useState, useCallback } from 'react';
-import { Cola } from '../lib/Cola';
-import type { NodoCancion } from '../lib/Cola';
+import { Queue } from '../lib/Queue';
+import type { SongNode } from '../lib/Queue';
 import type { Song } from '../types/song';
 import { revokeObjectURL } from '../services/LocalFileService';
 
 
 
 export function usePlaylist() {
-  const dll           = useRef(new Cola<Song>());
-  // Guarda los IDs en el orden original antes de hacer shuffle
+  const dll           = useRef(new Queue<Song>());
+  // Saves IDs in original order before shuffle.
   const originalOrder = useRef<string[] | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
 
@@ -16,14 +16,14 @@ export function usePlaylist() {
     setSongs(dll.current.toArray());
   }, []);
 
-  const addToQueue = useCallback((song: Song): NodoCancion<Song> => {
+  const addToQueue = useCallback((song: Song): SongNode<Song> => {
     const node = dll.current.append(song);
     syncArray();
     return node;
   }, [syncArray]);
 
-  const playNext = useCallback((song: Song, currentNode: NodoCancion<Song> | null): NodoCancion<Song> => {
-    let node: NodoCancion<Song>;
+  const playNext = useCallback((song: Song, currentNode: SongNode<Song> | null): SongNode<Song> => {
+    let node: SongNode<Song>;
     if (currentNode === null) {
       node = dll.current.append(song);
     } else {
@@ -33,7 +33,7 @@ export function usePlaylist() {
     return node;
   }, [syncArray]);
 
-  const removeSong = useCallback((node: NodoCancion<Song>) => {
+  const removeSong = useCallback((node: SongNode<Song>) => {
     if (node.value.source === 'local') {
       revokeObjectURL(node.value.id);
     }
@@ -41,8 +41,8 @@ export function usePlaylist() {
     syncArray();
   }, [syncArray]);
 
-  // Guarda el orden original (como IDs) y mezcla sin destruir nodos
-  const shufflePlaylist = useCallback((anchorNode?: NodoCancion<Song> | null) => {
+  // Saves original order (IDs) and shuffles without recreating nodes.
+  const shufflePlaylist = useCallback((anchorNode?: SongNode<Song> | null) => {
     if (originalOrder.current === null) {
       originalOrder.current = dll.current.toArray().map(s => s.id);
     }
@@ -50,25 +50,24 @@ export function usePlaylist() {
     syncArray();
   }, [syncArray]);
 
-  // Restaura el orden anterior buscando cada nodo por ID.
-  // Si se pasa anchorNode (canción actual), rota la lista para que quede
-  // primera — igual que al activar shuffle — así nada "desaparece" de la fila.
-  const restoreOriginalOrder = useCallback((anchorNode?: NodoCancion<Song> | null) => {
+  // Restores previous order by locating nodes by ID.
+  // If anchorNode (current song) is provided, list is rotated so it stays first.
+  const restoreOriginalOrder = useCallback((anchorNode?: SongNode<Song> | null) => {
     if (!originalOrder.current) return;
 
     const savedIds = originalOrder.current;
-    const restoredNodes: NodoCancion<Song>[] = [];
+    const restoredNodes: SongNode<Song>[] = [];
     for (const id of savedIds) {
       const node = dll.current.findNode(s => s.id === id);
       if (node) restoredNodes.push(node);
     }
 
-    // Canciones añadidas durante el shuffle van al final
+    // Songs added during shuffle are appended at the end.
     const restoredSet = new Set(restoredNodes);
     const newNodes = dll.current.getNodes().filter(n => !restoredSet.has(n));
     let finalOrder = [...restoredNodes, ...newNodes];
 
-    // Rotar para que la canción actual quede primera
+    // Rotate so the current song stays first.
     if (anchorNode) {
       const anchorIdx = finalOrder.indexOf(anchorNode);
       if (anchorIdx > 0) {

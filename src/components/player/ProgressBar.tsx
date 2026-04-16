@@ -22,7 +22,7 @@ export function ProgressBar() {
           onChange={handleChange}
           className="progress-bar__slider"
           style={{ '--percent': `${percent}%` } as React.CSSProperties}
-          aria-label="Progreso de reproducción"
+          aria-label="Playback progress"
         />
       </div>
       <span className="progress-bar__time">{formatTime(duration)}</span>

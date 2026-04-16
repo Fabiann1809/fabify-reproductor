@@ -3,8 +3,8 @@ import { usePlayer } from '../hooks/usePlayer';
 import { usePlaylist } from '../hooks/usePlaylist';
 import { useSearch } from '../hooks/useSearch';
 import type { Song } from '../types/song';
-import type { NodoCancion } from '../lib/Cola';
-import type { Cola } from '../lib/Cola';
+import type { SongNode } from '../lib/Queue';
+import type { Queue } from '../lib/Queue';
 import type { RepeatMode } from '../hooks/usePlayer';
 
 export type ActiveView = 'queue' | 'library' | 'history';
@@ -19,9 +19,9 @@ interface PlayerContextValue {
   repeatMode: RepeatMode;
   isShuffle: boolean;
   historyItems: Song[];
-  currentNode: React.MutableRefObject<NodoCancion<Song> | null>;
+  currentNode: React.MutableRefObject<SongNode<Song> | null>;
   // Player actions
-  playSong: (node: NodoCancion<Song>) => void;
+  playSong: (node: SongNode<Song>) => void;
   next: () => void;
   prev: () => void;
   togglePlay: () => void;
@@ -33,15 +33,15 @@ interface PlayerContextValue {
   // Playlist state
   songs: Song[];
   // Playlist actions
-  addToQueue: (song: Song) => NodoCancion<Song>;
-  playNext: (song: Song, currentNode: NodoCancion<Song> | null) => NodoCancion<Song>;
-  removeSong: (node: NodoCancion<Song>) => void;
+  addToQueue: (song: Song) => SongNode<Song>;
+  playNext: (song: Song, currentNode: SongNode<Song> | null) => SongNode<Song>;
+  removeSong: (node: SongNode<Song>) => void;
   shufflePlaylist: () => void;
   reversePlaylist: () => void;
   clearPlaylist: () => void;
   updateSongDuration: (songId: string, durationMs: number) => void;
   moveNode: (draggedId: string, afterId: string | null) => void;
-  dll: React.MutableRefObject<Cola<Song>>;
+  dll: React.MutableRefObject<Queue<Song>>;
   // Search state
   query: string;
   setQuery: (q: string) => void;
@@ -63,26 +63,39 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const handleToggleShuffle = () => {
     if (!player.isShuffle) {
-      // Activar: mezclar dejando la canción actual al principio
+      // Enable: shuffle while keeping current song first.
       playlist.shufflePlaylist(player.currentNode.current);
     } else {
-      // Desactivar: restaurar el orden original con la canción actual primero
+      // Disable: restore original order with current song first.
       playlist.restoreOriginalOrder(player.currentNode.current);
     }
     player.toggleShuffle();
   };
 
-  const addToQueue = useCallback((song: Song): NodoCancion<Song> => {
+  const addToQueue = useCallback((song: Song): SongNode<Song> => {
     const node = playlist.addToQueue(song);
     setActiveView('queue');
     return node;
   }, [playlist]);
 
-  const playNext = useCallback((song: Song, currentNode: NodoCancion<Song> | null): NodoCancion<Song> => {
+  const playNext = useCallback((song: Song, currentNode: SongNode<Song> | null): SongNode<Song> => {
     const node = playlist.playNext(song, currentNode);
     setActiveView('queue');
     return node;
   }, [playlist]);
+
+  const handleClearPlaylist = useCallback(() => {
+    playlist.clearPlaylist();
+    player.stopPlayer();
+  }, [playlist, player.stopPlayer]);
+
+  const handleRemoveSong = useCallback((node: SongNode<Song>) => {
+    playlist.removeSong(node);
+    // If the currently playing song was removed, stop playback.
+    if (player.currentNode.current === node) {
+      player.stopPlayer();
+    }
+  }, [playlist, player.currentNode, player.stopPlayer]);
 
   const value: PlayerContextValue = {
     nowPlaying:          player.nowPlaying,
@@ -106,10 +119,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     songs:               playlist.songs,
     addToQueue,
     playNext,
-    removeSong:          playlist.removeSong,
+    removeSong:          handleRemoveSong,
     shufflePlaylist:     playlist.shufflePlaylist,
     reversePlaylist:     playlist.reversePlaylist,
-    clearPlaylist:       playlist.clearPlaylist,
+    clearPlaylist:       handleClearPlaylist,
     updateSongDuration:  playlist.updateSongDuration,
     moveNode:            playlist.moveNode,
     dll:                 playlist.dll,

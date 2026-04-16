@@ -42,7 +42,7 @@ export function LocalFileImport({ compact = false }: LocalFileImportProps) {
       <button
         className="sidebar__upload-btn"
         onClick={() => fileInputRef.current?.click()}
-        title="Importar archivos de audio"
+        title="Import audio files"
       >
         <input
           ref={fileInputRef}
@@ -55,7 +55,7 @@ export function LocalFileImport({ compact = false }: LocalFileImportProps) {
         <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
           <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
         </svg>
-        Subir archivo local
+        Upload local file
       </button>
     );
   }
@@ -78,7 +78,7 @@ export function LocalFileImport({ compact = false }: LocalFileImportProps) {
       />
       <span className="file-import__icon">🎵</span>
       <p className="file-import__text">
-        {isDragging ? 'Suelta los archivos aquí' : 'Arrastra archivos de audio o haz clic para importar'}
+        {isDragging ? 'Drop files here' : 'Drag audio files or click to import'}
       </p>
     </div>
   );

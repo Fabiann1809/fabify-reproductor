@@ -9,13 +9,13 @@ export function SearchBar() {
       <input
         type="text"
         className="search-bar__input"
-        placeholder="Buscar artistas, canciones..."
+        placeholder="Search artists, songs..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        aria-label="Buscar canciones"
+        aria-label="Search songs"
       />
       {query && (
-        <button className="search-bar__clear" onClick={() => setQuery('')} aria-label="Limpiar búsqueda">
+        <button className="search-bar__clear" onClick={() => setQuery('')} aria-label="Clear search">
           ✕
         </button>
       )}

@@ -7,7 +7,7 @@ export function CenterSearch() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Cerrar el dropdown al hacer clic fuera
+  // Close dropdown on outside click.
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -32,7 +32,7 @@ export function CenterSearch() {
 
   return (
     <div className="center-search" ref={containerRef}>
-      {/* Barra de búsqueda */}
+      {/* Search bar */}
       <div className={`center-search__bar ${showDropdown ? 'center-search__bar--open' : ''}`}>
         <svg className="center-search__icon" viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
           <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -40,26 +40,26 @@ export function CenterSearch() {
         <input
           type="text"
           className="center-search__input"
-          placeholder="Buscar canciones, artistas..."
+          placeholder="Search songs, artists..."
           value={query}
           onChange={handleChange}
           onFocus={() => query.trim() && setIsOpen(true)}
-          aria-label="Buscar canciones"
+          aria-label="Search songs"
         />
         {query && (
-          <button className="center-search__clear" onClick={handleClear} aria-label="Limpiar búsqueda">
+          <button className="center-search__clear" onClick={handleClear} aria-label="Clear search">
             ✕
           </button>
         )}
       </div>
 
-      {/* Dropdown de resultados */}
+      {/* Results dropdown */}
       {showDropdown && (
         <div className="center-search__dropdown">
           {isLoading && (
             <div className="center-search__state">
               <div className="spinner" />
-              <span>Buscando...</span>
+              <span>Searching...</span>
             </div>
           )}
 
@@ -71,7 +71,7 @@ export function CenterSearch() {
 
           {!isLoading && !searchError && results.length === 0 && (
             <div className="center-search__state">
-              No se encontraron resultados para "{query}"
+              No results found for "{query}"
             </div>
           )}
 

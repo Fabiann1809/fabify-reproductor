@@ -1,4 +1,4 @@
-// Tema único — interfaz neumórfica fija, sin toggle claro/oscuro
+// Single theme — fixed neumorphic interface, no light/dark toggle.
 export type Theme = 'light';
 
 export function useTheme() {

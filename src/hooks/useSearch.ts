@@ -29,7 +29,7 @@ export function useSearch() {
         setResults(songs);
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
-        setError('Error al buscar canciones. Intenta de nuevo.');
+        setError('Error searching songs. Please try again.');
       } finally {
         setIsLoading(false);
       }

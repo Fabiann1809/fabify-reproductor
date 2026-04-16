@@ -1,17 +1,21 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Song } from '../../types/song';
-import type { NodoCancion } from '../../lib/Cola';
+import type { SongNode } from '../../lib/Queue';
 import { ContextMenu } from './ContextMenu';
 import { usePlayerContext } from '../../context/PlayerContext';
 import { formatDuration } from '../../types/song';
 
-// Variable de módulo: ID de la canción siendo arrastrada en este momento.
-// Se comparte entre todas las instancias de SongCard sin provocar re-renders.
+// Module-level variable: ID of the song being dragged.
+// Shared across SongCard instances without triggering re-renders.
 let activeDragId: string | null = null;
+
+// Global registry of indicator cleanup functions.
+// Lets handleDragEnd clean ALL cards, not just the dragged one.
+const indicatorCleanups = new Set<() => void>();
 
 interface SongCardProps {
   song: Song;
-  node?: NodoCancion<Song>;
+  node?: SongNode<Song>;
   showRemove?: boolean;
   showQueueActions?: boolean;
   isActive?: boolean;
@@ -29,10 +33,19 @@ export function SongCard({
   const { playSong, playNext, addToQueue, removeSong, moveNode, currentNode, dll } = usePlayerContext();
   const [menuPos, setMenuPos]       = useState<{ x: number; y: number } | null>(null);
   const [dropIndicator, setDropIndicator] = useState<'above' | 'below' | null>(null);
-  // Ref para la posición actual: evita el cierre desactualizado en handleDrop
   const dropPosRef = useRef<'above' | 'below' | null>(null);
 
-  // ── Reproducción ────────────────────────────────────────────
+  // Register/unregister this card cleanup in the global registry.
+  useEffect(() => {
+    const cleanup = () => {
+      dropPosRef.current = null;
+      setDropIndicator(null);
+    };
+    indicatorCleanups.add(cleanup);
+    return () => { indicatorCleanups.delete(cleanup); };
+  }, []);
+
+  // Playback
   const handlePlayNow = () => {
     if (node) { playSong(node); return; }
     const found = dll.current.findNode((s) => s.id === song.id);
@@ -62,7 +75,7 @@ export function SongCard({
     setMenuPos({ x: rect.left, y: rect.bottom });
   };
 
-  // ── Drag & Drop ─────────────────────────────────────────────
+  // Drag & Drop
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     activeDragId = song.id;
     e.dataTransfer.setData('text/plain', song.id);
@@ -73,12 +86,12 @@ export function SongCard({
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     activeDragId = null;
     e.currentTarget.classList.remove('song-card--dragging');
-    dropPosRef.current = null;
-    setDropIndicator(null);
+    // Clear indicators on ALL cards, not only the dragged card.
+    indicatorCleanups.forEach((fn) => fn());
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    // Ignorar si no hay drag activo, si es la misma canción, o si no hay nodo
+    // Ignore if there is no active drag, same song, or missing target node.
     if (!activeDragId || activeDragId === song.id || !node) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -91,7 +104,7 @@ export function SongCard({
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    // Solo limpiar si el cursor realmente sale de la card (no a un hijo)
+    // Only clear when cursor actually leaves the card (not entering a child).
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       dropPosRef.current = null;
       setDropIndicator(null);
@@ -101,12 +114,16 @@ export function SongCard({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const draggedId = e.dataTransfer.getData('text/plain');
-    const pos = dropPosRef.current; // leer del ref, no del estado
 
-    dropPosRef.current = null;
-    setDropIndicator(null);
+    // Clear all indicators before processing drop.
+    indicatorCleanups.forEach((fn) => fn());
 
     if (!draggedId || draggedId === song.id || !node) return;
+
+    // Recompute drop position from event to avoid timing issues where
+    // handleDragLeave clears dropPosRef right before drop.
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos: 'above' | 'below' = e.clientY < rect.top + rect.height / 2 ? 'above' : 'below';
 
     if (pos === 'above') {
       moveNode(draggedId, node.prev?.value.id ?? null);
@@ -140,7 +157,7 @@ export function SongCard({
         {draggable && node && (
           <span
             className="song-card__drag-handle"
-            title="Arrastrar para mover"
+            title="Drag to move"
             onClick={(e) => e.stopPropagation()}
           >
             ⠿
@@ -169,23 +186,23 @@ export function SongCard({
 
         {showQueueActions ? (
           <div className="song-queue-actions">
-            <button className="queue-action-btn" onClick={handlePlayNext} title="Reproducir a continuación">
-              Sig.
+            <button className="queue-action-btn" onClick={handlePlayNext} title="Play next">
+              Next
             </button>
-            <button className="queue-action-btn" onClick={handleAddToQueue} title="Agregar al final">
-              Final
+            <button className="queue-action-btn" onClick={handleAddToQueue} title="Add to end">
+              End
             </button>
           </div>
         ) : (
           <div className="song-card__actions">
-            <button className="icon-btn" onClick={handleMenuButton} title="Opciones">
+            <button className="icon-btn" onClick={handleMenuButton} title="Options">
               ⋮
             </button>
             {showRemove && node && (
               <button
                 className="icon-btn icon-btn--danger"
                 onClick={(e) => { e.stopPropagation(); removeSong(node); }}
-                title="Eliminar"
+                title="Remove"
               >
                 ✕
               </button>

@@ -1,12 +1,12 @@
-export interface NodoCancion<T> {
+export interface SongNode<T> {
   value: T;
-  prev: NodoCancion<T> | null;
-  next: NodoCancion<T> | null;
+  prev: SongNode<T> | null;
+  next: SongNode<T> | null;
 }
 
-export class Cola<T> {
-  private head: NodoCancion<T> | null = null;
-  private tail: NodoCancion<T> | null = null;
+export class Queue<T> {
+  private head: SongNode<T> | null = null;
+  private tail: SongNode<T> | null = null;
   private _size: number = 0;
 
   get size(): number {
@@ -17,16 +17,16 @@ export class Cola<T> {
     return this._size === 0;
   }
 
-  getHead(): NodoCancion<T> | null {
+  getHead(): SongNode<T> | null {
     return this.head;
   }
 
-  getTail(): NodoCancion<T> | null {
+  getTail(): SongNode<T> | null {
     return this.tail;
   }
 
-  append(value: T): NodoCancion<T> {
-    const node: NodoCancion<T> = { value, prev: null, next: null };
+  append(value: T): SongNode<T> {
+    const node: SongNode<T> = { value, prev: null, next: null };
     if (this.tail === null) {
       this.head = node;
       this.tail = node;
@@ -39,8 +39,8 @@ export class Cola<T> {
     return node;
   }
 
-  prepend(value: T): NodoCancion<T> {
-    const node: NodoCancion<T> = { value, prev: null, next: null };
+  prepend(value: T): SongNode<T> {
+    const node: SongNode<T> = { value, prev: null, next: null };
     if (this.head === null) {
       this.head = node;
       this.tail = node;
@@ -53,11 +53,11 @@ export class Cola<T> {
     return node;
   }
 
-  insertAfter(refNode: NodoCancion<T>, value: T): NodoCancion<T> {
+  insertAfter(refNode: SongNode<T>, value: T): SongNode<T> {
     if (refNode === this.tail) {
       return this.append(value);
     }
-    const node: NodoCancion<T> = { value, prev: refNode, next: refNode.next };
+    const node: SongNode<T> = { value, prev: refNode, next: refNode.next };
     if (refNode.next !== null) {
       refNode.next.prev = node;
     }
@@ -66,11 +66,11 @@ export class Cola<T> {
     return node;
   }
 
-  // Mueve un nodo existente a otra posición — O(1), no crea nodos nuevos
-  moveAfter(nodeToMove: NodoCancion<T>, afterNode: NodoCancion<T> | null): void {
+  // Moves an existing node to a new position in O(1), no new nodes created.
+  moveAfter(nodeToMove: SongNode<T>, afterNode: SongNode<T> | null): void {
     if (nodeToMove === afterNode) return;
 
-    // 1. Desenlazar nodeToMove de su posición actual
+    // 1) Detach nodeToMove from its current position.
     if (nodeToMove.prev !== null) {
       nodeToMove.prev.next = nodeToMove.next;
     } else {
@@ -82,7 +82,7 @@ export class Cola<T> {
       this.tail = nodeToMove.prev;
     }
 
-    // 2. Re-enlazar después de afterNode (null = mover al principio)
+    // 2) Re-link after afterNode (null means move to head).
     if (afterNode === null) {
       nodeToMove.prev = null;
       nodeToMove.next = this.head;
@@ -96,10 +96,13 @@ export class Cola<T> {
       afterNode.next = nodeToMove;
       if (nodeToMove.next === null) this.tail = nodeToMove;
     }
-    // _size no cambia: el nodo se movió, no se agregó ni eliminó
+    // _size does not change: node moved, not added/removed.
   }
 
-  remove(node: NodoCancion<T>): void {
+  remove(node: SongNode<T>): void {
+    // Guard: node already removed or not part of this list.
+    if (node.prev === null && node.next === null && node !== this.head) return;
+
     if (node.prev !== null) {
       node.prev.next = node.next;
     } else {
@@ -115,7 +118,7 @@ export class Cola<T> {
     this._size--;
   }
 
-  findNode(predicate: (v: T) => boolean): NodoCancion<T> | null {
+  findNode(predicate: (v: T) => boolean): SongNode<T> | null {
     let current = this.head;
     while (current !== null) {
       if (predicate(current.value)) return current;
@@ -134,16 +137,16 @@ export class Cola<T> {
     return result;
   }
 
-  // Devuelve todos los nodos en orden actual
-  getNodes(): NodoCancion<T>[] {
-    const nodes: NodoCancion<T>[] = [];
+  // Returns all nodes in current order.
+  getNodes(): SongNode<T>[] {
+    const nodes: SongNode<T>[] = [];
     let cur = this.head;
     while (cur !== null) { nodes.push(cur); cur = cur.next; }
     return nodes;
   }
 
-  // Re-enlaza los nodos en el orden dado — preserva referencias, sin crear nodos nuevos
-  reorderNodes(nodes: NodoCancion<T>[]): void {
+  // Re-links existing nodes in the provided order.
+  reorderNodes(nodes: SongNode<T>[]): void {
     if (nodes.length === 0) { this.head = null; this.tail = null; return; }
     for (let i = 0; i < nodes.length; i++) {
       nodes[i].prev = nodes[i - 1] ?? null;
@@ -153,14 +156,14 @@ export class Cola<T> {
     this.tail = nodes[nodes.length - 1];
   }
 
-  // Aleatoriza re-enlazando punteros — los nodos existentes conservan sus referencias.
-  // Si se pasa anchorNode, ese nodo queda al principio (canción actual).
-  shuffleNodes(anchorNode?: NodoCancion<T> | null): void {
+  // Shuffles by re-linking pointers. Existing node references stay valid.
+  // If anchorNode is provided, it is kept at the start.
+  shuffleNodes(anchorNode?: SongNode<T> | null): void {
     const nodes = this.getNodes();
     if (nodes.length <= 1) return;
 
-    // Separar el ancla del resto
-    let anchor: NodoCancion<T> | null = null;
+    // Separate anchor from the rest.
+    let anchor: SongNode<T> | null = null;
     let rest = nodes;
     if (anchorNode) {
       const idx = nodes.indexOf(anchorNode);
@@ -170,7 +173,7 @@ export class Cola<T> {
       }
     }
 
-    // Fisher-Yates sobre el resto
+    // Fisher-Yates over the remaining nodes.
     for (let i = rest.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [rest[i], rest[j]] = [rest[j], rest[i]];

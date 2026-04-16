@@ -1,14 +1,14 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Historial } from '../lib/Historial';
-import type { NodoCancion } from '../lib/Cola';
+import { HistoryStack } from '../lib/HistoryStack';
+import type { SongNode } from '../lib/Queue';
 import type { Song } from '../types/song';
 
 export type RepeatMode = 'none' | 'one' | 'all';
 
 export function usePlayer() {
   const audioRef = useRef(new Audio());
-  const history = useRef(new Historial<Song>());
-  const currentNode = useRef<NodoCancion<Song> | null>(null);
+  const history = useRef(new HistoryStack<Song>());
+  const currentNode = useRef<SongNode<Song> | null>(null);
 
   const [nowPlaying, setNowPlaying] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,20 +29,17 @@ export function usePlayer() {
     const handleDurationChange = () => setDuration(audio.duration || 0);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
-    const handleEnded = () => handleSongEnded();
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
-    audio.addEventListener('ended', handleEnded);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('ended', handleEnded);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -60,7 +57,7 @@ export function usePlayer() {
     return song;
   }, []);
 
-  const playSong = useCallback((node: NodoCancion<Song>) => {
+  const playSong = useCallback((node: SongNode<Song>) => {
     const audio = audioRef.current;
     if (currentNode.current && currentNode.current.value.id !== node.value.id) {
       pushToHistory(currentNode.current.value);
@@ -109,7 +106,7 @@ export function usePlayer() {
     }
     const dll = currentNode.current;
     if (!dll) return;
-    let cursor: NodoCancion<Song> | null = currentNode.current;
+    let cursor: SongNode<Song> | null = currentNode.current;
     while (cursor && cursor.value.id !== previous.id) {
       cursor = cursor.prev;
     }
@@ -145,7 +142,7 @@ export function usePlayer() {
     }
 
     if (currentRepeat === 'all') {
-      const nextNode = node.next ?? (node as NodoCancion<Song> & { _head?: NodoCancion<Song> })._head;
+      const nextNode = node.next ?? (node as SongNode<Song> & { _head?: SongNode<Song> })._head;
       if (node.next) {
         pushToHistory(node.value);
         currentNode.current = node.next;
@@ -225,6 +222,17 @@ export function usePlayer() {
     setIsShuffle((prev) => !prev);
   }, []);
 
+  const stopPlayer = useCallback(() => {
+    const audio = audioRef.current;
+    audio.pause();
+    audio.src = '';
+    currentNode.current = null;
+    setNowPlaying(null);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  }, []);
+
   return {
     audioRef,
     currentNode,
@@ -245,6 +253,7 @@ export function usePlayer() {
     setVolumeLevel,
     cycleRepeatMode,
     toggleShuffle,
+    stopPlayer,
     onShufflePlaylist,
   };
 }

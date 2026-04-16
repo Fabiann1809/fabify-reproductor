@@ -33,13 +33,13 @@ export function ContextMenu({ x, y, onPlayNow, onPlayNext, onAddToQueue, onClose
       className="context-menu"
     >
       <button className="context-menu-item" onClick={() => { onPlayNow(); onClose(); }}>
-        <span>▶</span> Reproducir ahora
+        <span>▶</span> Play now
       </button>
       <button className="context-menu-item" onClick={() => { onPlayNext(); onClose(); }}>
-        <span>⏭</span> Reproducir siguiente
+        <span>⏭</span> Play next
       </button>
       <button className="context-menu-item" onClick={() => { onAddToQueue(); onClose(); }}>
-        <span>+</span> Agregar a la cola
+        <span>+</span> Add to queue
       </button>
     </div>
   );

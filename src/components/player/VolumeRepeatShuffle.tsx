@@ -10,7 +10,7 @@ export function VolumeRepeatShuffle() {
       <button
         className="mode-btn"
         onClick={() => setVolumeLevel(volume > 0 ? 0 : 0.8)}
-        title={volume > 0 ? 'Silenciar' : 'Activar sonido'}
+        title={volume > 0 ? 'Mute' : 'Enable sound'}
       >
         {volume === 0 ? (
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
@@ -36,7 +36,7 @@ export function VolumeRepeatShuffle() {
         onChange={(e) => setVolumeLevel(Number(e.target.value))}
         className="volume-slider"
         style={{ '--percent': `${volumePercent}%` } as React.CSSProperties}
-        aria-label={`Volumen ${volumePercent}%`}
+        aria-label={`Volume ${volumePercent}%`}
       />
     </div>
   );

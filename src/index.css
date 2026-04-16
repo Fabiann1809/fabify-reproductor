@@ -12,12 +12,12 @@
   --surface3: #EBEBEB;
   --border:   #E0E0E0;
 
-  /* Tipografía */
+  /* Typography */
   --text:           #1A1A1A;
   --text-secondary: #707070;
   --text-muted:     #9A9A9A;
 
-  /* Acento taupe cálido */
+  /* Warm taupe accent */
   --accent:      #A89F94;
   --accent-dim:  rgba(168,159,148,0.15);
   --accent-glow: rgba(168,159,148,0.30);
@@ -29,7 +29,7 @@
   /* Estado */
   --danger: #C0392B;
 
-  /* ── Sombras neumórficas ──────────────────────────────────── */
+  /* ── Neumorphic shadows ───────────────────────────────────── */
   /* raised: elemento que sobresale de la superficie            */
   --neu-raised:
     5px 5px 12px rgba(0,0,0,0.10),
@@ -205,7 +205,7 @@ input, select {
 
 /* ─────────────────────────────────────────────────────────────
    DYNAMIC BACKGROUND — tinte sutil del artwork
-   Muy suave para no romper la estética neumórfica
+   Very subtle to preserve the neumorphic style
    ───────────────────────────────────────────────────────────── */
 .dyn-bg {
   position: absolute;
@@ -242,7 +242,7 @@ input, select {
   opacity: 0.18;
 }
 
-/* Viñeta: funde el tinte hacia el fondo neumórfico en los bordes */
+/* Vignette: blends tint into neumorphic background at edges */
 .dyn-bg__vignette {
   position: absolute;
   inset: 0;
@@ -254,7 +254,7 @@ input, select {
   );
 }
 
-/* Resplandor sutil detrás del tocadiscos */
+/* Subtle glow behind the turntable */
 .player-center__glow {
   position: absolute;
   top: 15%;
@@ -375,7 +375,7 @@ input, select {
   z-index: 1;
 }
 
-/* Tamaños para la barra central */
+/* Sizes for the center bar */
 .player-center .player-controls    { gap: 8px; }
 .player-center .control-btn--secondary { width: 40px; height: 40px; }
 .player-center .control-btn--play  { width: 56px; height: 56px; }
@@ -458,6 +458,10 @@ input, select {
 
 .queue-section--scrollable .song-list { flex: 1; }
 
+.song-list--played { opacity: 0.45; pointer-events: none; user-select: none; }
+
+.queue-section__label--muted { opacity: 0.6; }
+
 .queue-section__label {
   font-size: 10.5px;
   font-weight: 700;
@@ -480,7 +484,7 @@ input, select {
   font-style: italic;
 }
 
-/* "Estás escuchando" card */
+/* "Now playing" card */
 .queue-now-playing {
   display: flex;
   align-items: center;
@@ -774,7 +778,7 @@ input, select {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   PLAYER CONTROLS — botones neumórficos
+   PLAYER CONTROLS — neumorphic buttons
    ───────────────────────────────────────────────────────────── */
 .player-controls {
   display: flex;
@@ -912,7 +916,7 @@ input, select {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SEARCH BAR — inset neumórfica
+   SEARCH BAR — neumorphic inset
    ───────────────────────────────────────────────────────────── */
 .search-bar {
   display: flex;
@@ -1318,10 +1322,10 @@ input, select {
 .mobile-nav { display: none; }
 
 /* ─────────────────────────────────────────────────────────────
-   RESPONSIVE — móvil (≤ 768px)
+   RESPONSIVE — mobile (≤ 768px)
    ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Layout: columna única con barra inferior */
+  /* Layout: single column with bottom bar */
   .app-layout {
     display: flex;
     flex-direction: column;
@@ -1346,7 +1350,7 @@ input, select {
     border-top: 1px solid var(--border);
   }
 
-  /* Mostrar solo el panel activo en móvil */
+  /* Show only active panel on mobile */
   .app-layout--mobile-player .right-panel { display: none; }
   .app-layout--mobile-panel  .player-center { display: none; }
 
@@ -1357,17 +1361,17 @@ input, select {
     justify-content: space-evenly;
   }
 
-  /* Tocadiscos un poco más pequeño */
+  /* Slightly smaller turntable */
   .player-center .turntable-wrapper { max-width: 260px; }
   .turntable-wrapper { width: 220px; }
 
-  /* Controles: más compactos */
+  /* Controls: more compact */
   .player-center__controls { padding: 10px 4px 8px; gap: 8px; }
   .player-center .control-btn--play      { width: 50px; height: 50px; }
   .player-center .control-btn--secondary { width: 36px; height: 36px; }
   .player-center .volume-slider          { width: 70px; }
 
-  /* Barra de navegación inferior */
+  /* Bottom navigation bar */
   .mobile-nav {
     display: flex;
     flex-shrink: 0;

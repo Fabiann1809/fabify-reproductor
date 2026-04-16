@@ -60,7 +60,7 @@ export function WaveformVisualizer() {
       const totalBarWidth = (W - BAR_GAP * (BAR_COUNT - 1)) / BAR_COUNT;
       const barW = Math.max(1, totalBarWidth);
 
-      // Barras taupe --accent #A89F94 con sombra neumórfica
+      // Taupe bars --accent #A89F94 with neumorphic shadow.
       ctx!.shadowColor    = 'rgba(0,0,0,0.13)';
       ctx!.shadowBlur     = 6;
       ctx!.shadowOffsetX  = 2;
@@ -93,7 +93,7 @@ export function WaveformVisualizer() {
         ctx!.closePath();
         ctx!.fill();
       }
-      // Resetear sombra para no contaminar otros dibujos
+      // Reset shadow to avoid affecting other drawings.
       ctx!.shadowColor   = 'transparent';
       ctx!.shadowBlur    = 0;
       ctx!.shadowOffsetX = 0;

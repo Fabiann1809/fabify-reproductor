@@ -11,8 +11,8 @@ export function SearchResults({ showQueueActions = false }: SearchResultsProps) 
   if (!query.trim()) {
     return (
       <div className="empty-state">
-        <p>Busca tus canciones favoritas</p>
-        <small>Escribe el nombre de un artista o canción</small>
+        <p>Search your favorite songs</p>
+        <small>Type the name of an artist or song</small>
       </div>
     );
   }
@@ -21,7 +21,7 @@ export function SearchResults({ showQueueActions = false }: SearchResultsProps) 
     return (
       <div className="empty-state">
         <div className="spinner" />
-        <p>Buscando...</p>
+        <p>Searching...</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function SearchResults({ showQueueActions = false }: SearchResultsProps) 
   if (results.length === 0) {
     return (
       <div className="empty-state">
-        <p>No se encontraron resultados para "{query}"</p>
+        <p>No results found for "{query}"</p>
       </div>
     );
   }

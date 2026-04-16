@@ -36,8 +36,8 @@ export function SearchPanel() {
           <div className="song-list">
             {localSongs.length === 0 ? (
               <div className="empty-state">
-                <p>No hay archivos locales</p>
-                <small>Usa el botón "Subir archivo local" para importar</small>
+                <p>No local files found</p>
+                <small>Use the "Upload local file" button to import</small>
               </div>
             ) : (
               localSongs.map((song) => (

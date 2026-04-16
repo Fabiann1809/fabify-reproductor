@@ -70,13 +70,13 @@ function Turntable({ artworkUrl, artist, spinning, lifted }: TurntableProps) {
         </linearGradient>
       </defs>
 
-      {/* ── DISC ── */}
+      {/* Disc */}
       <g transform="translate(130, 130)">
         <g
           className={spinning ? 'disc-spin' : ''}
           style={{ transformOrigin: '0px 0px' }}
         >
-          {/* Imagen del disco — mix-blend-mode:multiply hace el fondo blanco transparente */}
+          {/* Disc image — mix-blend-mode:multiply keeps white background transparent */}
           <image
             href="/disco.png"
             x="-122"
@@ -87,7 +87,7 @@ function Turntable({ artworkUrl, artist, spinning, lifted }: TurntableProps) {
             style={{ mixBlendMode: 'multiply' }}
           />
 
-          {/* Artwork de la canción sobre la etiqueta central */}
+          {/* Song artwork over center label */}
           {artworkUrl ? (
             <image
               href={artworkUrl}
@@ -114,7 +114,7 @@ function Turntable({ artworkUrl, artist, spinning, lifted }: TurntableProps) {
             </>
           )}
 
-          {/* Punto central */}
+          {/* Center point */}
           <circle cx="0" cy="0" r="5" fill="#1a1a1a" />
         </g>
       </g>
@@ -242,7 +242,7 @@ export function NowPlaying() {
         ) : (
           <>
             <p className="now-playing__title now-playing__title--idle">Lown</p>
-            <p className="now-playing__artist">Selecciona una canción</p>
+            <p className="now-playing__artist">Select a song</p>
           </>
         )}
       </div>

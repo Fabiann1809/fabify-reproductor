@@ -9,26 +9,26 @@ import { CenterSearch } from '../search/CenterSearch';
 export function PlayerCenter() {
   return (
     <main className="player-center">
-      {/* z-index 0 — fondo dinámico con artwork difuminado */}
+      {/* z-index 0 — dynamic blurred artwork background */}
       <DynamicBackground />
 
-      {/* z-index 1 — resplandor dorado ambiental */}
+      {/* z-index 1 — ambient golden glow */}
       <div className="player-center__glow" aria-hidden="true" />
 
-      {/* z-index 3 — buscador encima del tocadiscos */}
+      {/* z-index 3 — search input above turntable */}
       <CenterSearch />
 
-      {/* z-index 2 — tocadiscos */}
+      {/* z-index 2 — turntable */}
       <div className="player-center__stage">
         <NowPlaying />
       </div>
 
-      {/* z-index 3 — barra de controles estilo Spotify */}
+      {/* z-index 3 — Spotify-style control bar */}
       <div className="player-center__controls">
-        {/* Visualizador de ondas en el fondo */}
+        {/* Background waveform visualizer */}
         <WaveformVisualizer />
 
-        {/* Fila superior: [spacer] [5 botones centrales] [volumen] */}
+        {/* Top row: [spacer] [5 central buttons] [volume] */}
         <div className="player-center__ctrl-row">
           <div className="player-center__ctrl-side" />
           <PlayerControls />
@@ -37,7 +37,7 @@ export function PlayerCenter() {
           </div>
         </div>
 
-        {/* Barra de progreso con timestamps */}
+        {/* Progress bar with timestamps */}
         <ProgressBar />
       </div>
     </main>
